@@ -34,5 +34,42 @@
             </form>
         </field>
     </record>
+
+<!-- Menú en Inventario -> Operaciones -->
+    <menuitem id="menu_stock_picking_transfer" 
+                name="Transferencias Directas" 
+                parent="stock.menu_stock_picking" 
+                sequence="20" 
+                action="action_stock_picking_transfer"/>
+    
+    <!-- Acción asociada al menú -->
+    <record id="action_stock_picking_transfer" model="ir.actions.act_window">
+        <field name="name">Transferencias Directas</field>
+        <field name="res_model">stock.picking.transfer</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p>
+                Aquí puedes gestionar tus transferencias directas de inventario.
+            </p>
+        </field>
+    </record>
+    
+    <!-- Vista de lista para el modelo -->
+    <record id="view_stock_picking_transfer_tree" model="ir.ui.view">
+        <field name="name">stock.picking.transfer.tree</field>
+        <field name="model">stock.picking.transfer</field>
+        <field name="arch" type="xml">
+            <tree string="Transferencias Directas">
+                <field name="display_name"/>
+                <field name="company_id"/>
+                <field name="location_id"/>
+                <field name="location_dest_id"/>
+                <field name="scheduled_date"/>
+                <field name="date_done"/>
+                <field name="user_id"/>
+            </tree>
+        </field>
+    </record>
+
   </data>
 </odoo>
