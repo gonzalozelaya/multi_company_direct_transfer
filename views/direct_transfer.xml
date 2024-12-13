@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+<data>
+    <record id="view_stock_picking_transfer_form" model="ir.ui.view">
+        <field name="name">stock.picking.transfer.form</field>
+        <field name="model">stock.picking.transfer</field>
+        <field name="arch" type="xml">
+            <form string="Direct Transfer">
+                <sheet>
+                    <!-- Campos principales al inicio del formulario -->
+                    <group>
+                        <field name="company_id"/>
+                        <field name="location_id"/>
+                        <field name="location_dest_id"/>
+                        <field name="date"/>
+                        <field name="date_done"/>
+                        <field name="display_name"/>
+                        <field name="scheduled_date"/>
+                    </group>
+                    <!-- Notebook para las páginas -->
+                    <notebook>
+                        <!-- Página para las líneas de movimiento -->
+                        <page string="Líneas de Movimiento">
+                            <field name="move_ids" widget="one2many_list"/>
+                        </page>
+                        <!-- Página para el responsable -->
+                        <page string="Otra información">
+                            <group>
+                                <field name="user_id"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+  </data>
+</odoo>

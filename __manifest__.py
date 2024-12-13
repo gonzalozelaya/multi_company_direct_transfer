@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "aaaaaaaaaaaa",
+    'name': "Multicompany direct transfer",
 
     'summary': """
         Short (1 phrase/line) summary of the module's purpose, used as
@@ -24,7 +24,7 @@
 
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
-        'views/views.xml',
+        'security/ir.model.access.csv',
+        'views/stock_picking_transfer_views.xml',
    ],
 }
