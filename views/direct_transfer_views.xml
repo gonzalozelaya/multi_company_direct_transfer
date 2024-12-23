@@ -1,80 +1,109 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-<data>
-    <!-- Vista de formulario -->
-    <record id="view_stock_picking_transfer_form" model="ir.ui.view">
-        <field name="name">stock.picking.transfer.form</field>
-        <field name="model">stock.picking.transfer</field>
-        <field name="arch" type="xml">
-            <form string="Direct Transfer">
-                <sheet>
-                    <!-- Campos principales al inicio del formulario -->
-                    <group>
+    <data>
+        <!-- Vista de formulario -->
+        <record id="view_stock_picking_transfer_form" model="ir.ui.view">
+            <field name="name">stock.picking.transfer.form</field>
+            <field name="model">stock.picking.transfer</field>
+            <field name="arch" type="xml">
+                <form string="Direct Transfer">
+                    <header>
+                        <field name="state" widget="statusbar" readonly="False"/>
+                        <button name="send_products" string="Enviar productos" type="object" invisible="state != 'draft'"/>
+                        <button name="confirm" string="Confirmar" type="object" invisible="state == 'draft' or state == 'done'"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1 invisible="state != 'debts'"><span>Nuevo</span></h1>
+                            <h1 invisible="state != 'draft'"><span>Borrador</span></h1>
+                            <h1 invisible="state in ['draft']"><field name="name" readonly="1"/></h1>
+                        </div>
+                        <!-- Campos principales al inicio del formulario -->
                         <group>
-                            <field name="company_id"/>
-                            <field name="location_id"/>
-                            <field name="location_dest_id"/>
-                        </group>
-                        <group>
-                            <field name="date"/>
-                            <field name="date_done"/>
-                            <field name="scheduled_date"/>
-                        </group>
-                        <field name="display_name" invisible="1"/>
-                        
-                    </group>
-                    <!-- Notebook para las páginas -->
-                    <notebook>
-                        <!-- Página para las líneas de movimiento -->
-                        <page string="Líneas de Movimiento">
-                            <field name="move_ids" widget="one2many_list"/>
-                        </page>
-                        <!-- Página para el responsable -->
-                        <page string="Otra información">
                             <group>
-                                <field name="user_id"/>
+                                <field name="company_id"/>
+                                <field name="location_id"/>
+                                <field name="location_dest_id"/>
                             </group>
-                        </page>
-                    </notebook>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <!-- Vista de lista -->
-    <record id="view_stock_picking_transfer_tree" model="ir.ui.view">
-        <field name="name">stock.picking.transfer.tree</field>
-        <field name="model">stock.picking.transfer</field>
-        <field name="arch" type="xml">
-            <tree string="Transferencias Directas">
-                <field name="display_name"/>
-                <field name="company_id"/>
-                <field name="location_id"/>
-                <field name="location_dest_id"/>
-                <field name="scheduled_date"/>
-                <field name="date_done"/>
-                <field name="user_id"/>
-            </tree>
-        </field>
-    </record>
-
-    <!-- Acción asociada al menú -->
-    <record id="action_stock_picking_transfer" model="ir.actions.act_window">
-        <field name="name">Transferencias Directas</field>
-        <field name="res_model">stock.picking.transfer</field>
-        <field name="view_mode">tree,form</field>
-        <field name="help" type="html">
-            <p>
-                Aquí puedes gestionar tus transferencias directas de inventario.
-            </p>
-        </field>
-    </record>
-
-    <!-- Menú en Inventario -> Operaciones -->
-    <menuitem id="menu_stock_picking_transfer" 
-              name="Transferencias Directas" 
-              parent="stock.menu_stock_root" 
-              sequence="20" 
-              action="action_stock_picking_transfer"/>
-</data>
+                            <group>
+                                <field name="date"/>
+                                <field name="date_done"/>
+                                <field name="scheduled_date"/>
+                            </group>
+                            <field name="display_name" invisible="1"/>
+                            
+                        </group>
+                        <!-- Notebook para las páginas -->
+                        <notebook>
+                            <!-- Página para las líneas de movimiento -->
+                            <page string="Líneas de Movimiento">
+                                <field name="move_ids" mode="tree,kanban"
+                                    widget="stock_move_one2many"
+                                    readonly="state == 'done'"
+                                    context="{'default_company_id': company_id, 'default_date': scheduled_date, 'default_picking_transfer_id': id, 'default_location_id': location_id, 'default_location_dest_id': location_dest_id}"
+                                    add-label="Add a Product">
+                                    <tree decoration-muted="state == 'cancel' or (state == 'done')" string="Stock Moves" editable="1">
+                                        <field name="company_id" column_invisible="True"/>
+                                        <field name="name" column_invisible="True"/>
+                                        <field name="state" readonly="0" column_invisible="True"/>
+                                        <field name="picking_transfer_id" column_invisible="True"/>
+                                        <field name="move_ids" column_invisible="True"/>
+                                        <field name="location_id" column_invisible="True"/>
+                                        <field name="location_dest_id" column_invisible="True"/>
+                                        <field name="product_id" optional="show"/>
+                                        <field name="date" optional="hide"/>
+                                        <field name="quantity" string="Quantity" />
+                                        <field name="product_uom" readonly="state != 'draft'" options="{'no_open': True, 'no_create': True}" string="Unit"/>
+                                        <field name="product_uom" groups="!uom.group_uom" column_invisible="True"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <!-- Página para el responsable -->
+                            <page string="Otra información">
+                                <group>
+                                   <!-- <field name="user_id"/>-->
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    
+        <!-- Vista de lista -->
+        <record id="view_stock_picking_transfer_tree" model="ir.ui.view">
+            <field name="name">stock.picking.transfer.tree</field>
+            <field name="model">stock.picking.transfer</field>
+            <field name="arch" type="xml">
+                <tree string="Transferencias Directas" decoration-info="state == 'draft'" decoration-muted="state == 'cancel'" >
+                    <field name="name"/>
+                    <field name="company_id"/>
+                    <field name="location_id"/>
+                    <field name="location_dest_id"/>
+                    <field name="scheduled_date"/>
+                    <field name="date_done"/>
+                    <field name="user_id"/>
+                    <field name="state" widget="badge"/>
+                </tree>
+            </field>
+        </record>
+    
+        <!-- Acción asociada al menú -->
+        <record id="action_stock_picking_transfer" model="ir.actions.act_window">
+            <field name="name">Transferencias Directas</field>
+            <field name="res_model">stock.picking.transfer</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p>
+                    Aquí puedes gestionar tus transferencias directas de inventario.
+                </p>
+            </field>
+        </record>
+    
+        <!-- Menú en Inventario -> Operaciones -->
+        <menuitem id="menu_stock_picking_transfer" 
+                  name="Transferencias Directas" 
+                  parent="stock.menu_stock_root" 
+                  action="action_stock_picking_transfer"/>
+    </data>
 </odoo>

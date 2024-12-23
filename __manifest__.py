@@ -26,5 +26,6 @@
     'data': [
         'security/ir.model.access.csv',
         'views/direct_transfer_views.xml',
+        'data/stock_picking_transfer_sequence.xml',
    ],
 }
