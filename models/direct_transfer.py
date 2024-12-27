@@ -20,8 +20,29 @@ class DirectTransfer(models.Model):
         string="Compañía",
         default=lambda self: self.env.user.company_id.id
     )
-    location_dest_id = fields.Many2one('stock.location', string='Ubicación de destino', domain= "[('usage', '=', 'internal')]")
-    location_id = fields.Many2one('stock.location', string='Ubicación de origen',domain= "[('usage', '=', 'internal')]")
+    location_dest_id = fields.Selection(
+        selection='_get_all_locations',
+        string='Ubicación de destino',
+        store=True,
+        required=True  # Opcional: asegura que siempre se establezca un valor
+    )
+
+    location_dest_id_new = fields.Many2one(
+        'stock.location',
+        string='Ubicación de destino',
+        domain="[('usage', '=', 'internal')]",
+        store=True
+    )
+
+    location_id = fields.Many2one(
+        'stock.location',
+        string='Ubicación de origen',
+        domain="[('usage', '=', 'internal')]",
+        store=True,
+        required = True
+
+    )
+        
     date = fields.Datetime('Hora de salida',readonly=True)
     date_done = fields.Datetime('Hora de confirmación',readonly=True)
     scheduled_date = fields.Datetime(
@@ -50,7 +71,13 @@ class DirectTransfer(models.Model):
         default='draft',
         required=True
     )
-
+    
+    @api.model
+    def _get_all_locations(self):
+        """Busca todas las ubicaciones disponibles sin restricciones de compañía."""
+        locations = self.env['stock.location'].sudo().search([('usage', '=', 'internal')])
+        return [(loc.id, loc.display_name) for loc in locations]
+    
     @api.depends('name')
     def _compute_display_name(self):
         _logger.info('Change display name')
@@ -87,12 +114,13 @@ class DirectTransfer(models.Model):
                         raise UserError(f"El producto {move.product_id.name} no tiene una cantidad válida para transferir.")
     
                     # Movimiento de salida
+                    _logger.info(picking.location_id)
                     self.env['stock.move'].sudo().create({
                         'name': f"Salida de {move.product_id.name}",
                         'product_id': move.product_id.id,
                         'product_uom': move.product_uom.id,
                         'quantity': move.quantity,
-                        'location_id': picking.location_id.id,
+                        'location_id': transfer.location_id.id,
                         'location_dest_id': transport_location.id,
                         'company_id': picking.company_id.id,
                         'direct_transfer_id': move.id,
@@ -105,7 +133,7 @@ class DirectTransfer(models.Model):
                         'product_uom': move.product_uom.id,
                         'quantity': move.quantity,
                         'location_id': transport_location.id,
-                        'location_dest_id': picking.location_dest_id.id,
+                        'location_dest_id': transfer.location_dest_id_new.id,
                         'company_id': picking.company_id.id,
                         'direct_transfer_id': move.id,
                         'state': 'done'
@@ -117,8 +145,11 @@ class DirectTransfer(models.Model):
         self.date = fields.Datetime.now()
         if not self.name:
             self.name = self.env['ir.sequence'].next_by_code('stock.picking.transfer') or 'Nuevo'
-            #Debo poder usar el compute pero no está funcionando. Usando este workaround
             self.display_name = self.name
             self.sequence_used = self.name
-        self.write({'state': 'assigned'})
+        # Asegúrate de que los valores no se pierdan aquí
+        self.write({
+            'state': 'assigned',
+            'location_dest_id_new': int(self.location_dest_id),
+        })
         _logger.info('Movimientos generados y estado actualizado.')
